@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://community.rti.com/schema/6.1.2/rti_dds_profiles.xsd" version="6.1.2">
+    <types>
+        <module name="DdsEntities">
+          <module name="Constants">
+            <const name="DP_LIBRARY_NAME" type="string" value="&quot;MedicalDemoParticipantLibrary&quot;"/>
+            <const name="DP_ARM_CONTROLLER_NAME" type="string" value="&quot;ArmController&quot;"/>
+            <const name="DP_WEB_CONTROLLER_NAME" type="string" value="&quot;WebController&quot;"/>
+            <const name="DP_ORCHESTRATOR_NAME" type="string" value="&quot;Orchestrator&quot;"/>
+            <const name="SEPARATOR" type="string" value="&quot;::&quot;"/>
+            <const name="PUBLISHER_NAME" type="string" value="&quot;publisher&quot;"/>
+            <const name="SUBSCRIBER_NAME" type="string" value="&quot;subscriber&quot;"/>
+            <const name="DW_SUFFIX" type="string" value="&quot;DW&quot;"/>
+            <const name="DR_SUFFIX" type="string" value="&quot;DR&quot;"/>
+            <const name="ENDPOINT_MOTOR_TELEMETRY_NAME" type="string" value="&quot;MotorTelemetry&quot;"/>
+            <const name="ENDPOINT_MOTOR_CONTROL_NAME" type="string" value="&quot;MotorControl&quot;"/>
+            <const name="ENDPOINT_DEVICE_STATUS_NAME" type="string" value="&quot;DeviceStatus&quot;"/>
+            <const name="ENDPOINT_DEVICE_HEARTBEAT_NAME" type="string" value="&quot;DeviceHeartbeat&quot;"/>
+            <const name="ENDPOINT_DEVICE_COMMAND_NAME" type="string" value="&quot;DeviceCommand&quot;"/>
+          </module>
+        </module>
+        <module name="Common">
+          <enum name="DeviceStatuses">
+            <enumerator name="ON"/>
+            <enumerator name="OFF"/>
+            <enumerator name="PAUSED"/>
+            <enumerator name="STOPPED"/>
+            <enumerator name="ERROR"/>
+          </enum> 
+          <enum name="DeviceType">
+            <enumerator name="ARM_CONTROLLER"/>
+            <enumerator name="DIGITAL_TWIN"/>
+            <enumerator name="WEB_CONTROLLER"/>
+            <enumerator name="VIDEO_PUB"/>
+            <enumerator name="VIDEO_SUB"/>
+            <enumerator name="PATIENT_MONITOR"/>
+          </enum> 
+          <struct name= "DeviceStatus">
+            <member name="device" type="nonBasic"  nonBasicTypeName= "Common::DeviceType"  key="true"/>
+            <member name="status" type="nonBasic"  nonBasicTypeName= "Common::DeviceStatuses"/>
+          </struct>
+          <struct name= "DeviceHeartbeat">
+            <member name="device" type="nonBasic"  nonBasicTypeName= "Common::DeviceType" key="true"/>
+          </struct>
+        </module>
+        <module name="SurgicalRobot">
+          <enum name="Motors">
+            <enumerator name="BASE"/>
+            <enumerator name="SHOULDER"/>
+            <enumerator name="ELBOW"/>
+            <enumerator name="WRIST"/>
+            <enumerator name="HAND"/>
+          </enum> 
+          <enum name="MotorDirections">
+            <enumerator name="STATIONARY"/>
+            <enumerator name="INCREMENT"/>
+            <enumerator name="DECREMENT"/>
+          </enum> 
+          <struct name= "MotorTelemetry">
+            <member name="id" type="nonBasic"  nonBasicTypeName= "SurgicalRobot::Motors" key="true"/>
+            <member name="position_deg" type="float32"/>
+            <member name="speed_rpm" type="float32"/>
+            <member name="current_mA" type="float32"/>
+            <member name="voltage_V" type="float32"/>
+            <member name="temp_c" type="float32"/>
+          </struct>
+          <struct name= "MotorControl">
+            <member name="id" type="nonBasic"  nonBasicTypeName= "SurgicalRobot::Motors" key="true"/>
+            <member name="direction" type="nonBasic"  nonBasicTypeName= "SurgicalRobot::MotorDirections"/>
+          </struct>
+        </module>
+        <module name="Orchestrator">
+          <enum name="DeviceCommands">
+            <enumerator name="START"/>
+            <enumerator name="STOP"/>
+            <enumerator name="PAUSE"/>
+            <enumerator name="RESUME"/>
+          </enum> 
+          <struct name= "DeviceCommand">
+            <member name="device" type="nonBasic"  nonBasicTypeName= "Common::DeviceType" key="true"/>
+            <member name="command" type="nonBasic"  nonBasicTypeName= "Orchestrator::DeviceCommands"/>
+          </struct>
+        </module>
+        <module name="PatientMonitor">
+            <struct name="Vitals">
+                <member name="patient_name" type="string" key="true" stringMaxLength="20"/>
+                <member name="spo2" type="int32"/>
+                <member name="etco2" type="int32"/>
+                <member name="nibp" type="int32"/>
+              </struct>
+        </module>
+        <module name="DigitalTwin">
+            <struct name="Location">
+                <member name="id" type="string" key="true" stringMaxLength="20"/>
+                <member name="x" type="float32"/>
+                <member name="y" type="float32"/>
+                <member name="z" type="float32"/>
+              </struct>
+        </module>
+      </types>
+
+      <qos_library name="SystemLibrary">
+        <domain_participant_qos name="DefaultParticipant">
+          <base_name>
+            <element>BuiltinQosSnippetLib::Optimization.Discovery.Common</element>
+            <element>BuiltinQosSnippetLib::Optimization.Discovery.Endpoint.Fast</element>
+            <element>BuiltinQosSnippetLib::Optimization.ReliabilityProtocol.Common</element>
+            <!--element>BuiltinQosSnippetLib::Feature.Security.Enable</element-->
+          </base_name>
+          <receiver_pool>
+            <buffer_size>65530</buffer_size>
+          </receiver_pool>
+          <transport_builtin>
+            <shmem>
+              <!-- message_size_max should be >= largest message over SHMEM -->
+              <!-- receive_buffer_size and received_message_count_max should be modified accordingly -->
+              <!-- As a general rule: receive_buffer_size = message_size_max * received_message_count_max -->
+              <message_size_max>262144</message_size_max>
+              <receive_buffer_size>8388608</receive_buffer_size>
+              <received_message_count_max>32</received_message_count_max>
+            </shmem>
+            <udpv4>
+              <!-- You need to manually modify these in your kernel. -->
+              <!-- You should add the sysctl commands to your startup script. -->
+              <!--    Linux: https://community.rti.com/howto/improve-rti-connext-dds-network-performance-linux -->
+              <!--    QNX: https://community.rti.com/kb/how-increase-socket-buffer-sizes-qnx -->
+              <send_socket_buffer_size>10485760</send_socket_buffer_size>
+              <recv_socket_buffer_size>10485760</recv_socket_buffer_size>
+              <message_size_max>65530</message_size_max>
+            </udpv4>
+          </transport_builtin>
+
+          <property>
+            <!--value>
+              <element>
+                <name>dds.sec.access.permissions_ca</name>
+                <value>file:../security/ca/ecdsa01RootCaCert.pem</value>
+              </element>
+              <element>
+                <name>dds.sec.auth.identity_ca</name>
+                <value>file:../security/ca/ecdsa01RootCaCert.pem</value>
+              </element>
+              <element>
+                <name>dds.sec.auth.identity_certificate</name>
+                <value>file:../security/identities/ecdsa01Peer01Cert.pem</value>
+              </element>
+              <element>
+                <name>dds.sec.auth.private_key</name>
+                <value>file:../security/identities/ecdsa01Peer01Key.pem</value>
+              </element>
+              <element>
+                <name>dds.sec.access.governance</name>
+                <value>file:../security/signed/Signed_Governance.p7s</value>
+              </element>
+              <element>
+                <name>dds.sec.access.permissions</name>
+                <value>file:../security/signed/Signed_Permissions.p7s</value>
+              </element>
+            </value-->
+          </property>
+        </domain_participant_qos>
+      </qos_library>
+  
+      <qos_library name="DataFlowLibrary">
+        <qos_profile name="Streaming" base_name="BuiltinQosLib::Generic.BestEffort"/>
+        <qos_profile name="Status" base_name="BuiltinQosLib::Pattern.Status"/>
+        <qos_profile name="Heartbeat" base_name="Streaming">
+          <!-- Since the HB topic is sent at 20 Hz (50 ms), we'll use a deadline of 200 ms -->
+          <datawriter_qos>
+            <deadline>
+              <period>
+                <sec>0</sec>
+                <nanosec>200000000</nanosec>
+              </period>
+            </deadline>
+          </datawriter_qos>
+          <datareader_qos>
+            <deadline>
+              <period>
+                <sec>0</sec>
+                <nanosec>200000000</nanosec>
+              </period>
+            </deadline>
+          </datareader_qos>
+        </qos_profile>
+        <qos_profile name="Command" base_name="BuiltinQosLib::Generic.Common">
+          <base_name>
+            <element>BuiltinQosSnippetLib::QosPolicy.Reliability.Reliable</element>
+            <element>BuiltinQosSnippetLib::QosPolicy.History.KeepLast_1</element>
+            <element>BuiltinQosSnippetLib::Optimization.ReliabilityProtocol.KeepLast</element>
+          </base_name>
+        </qos_profile>
+      </qos_library>
+
+    <domain_library name="MedicalDemoDomainLibrary">
+      <domain name="OperationalDomain" domain_id="5">
+        <register_type name="SurgicalRobot::MotorTelemetry" type_ref="SurgicalRobot::MotorTelemetry"/>
+        <register_type name="SurgicalRobot::MotorControl" type_ref="SurgicalRobot::MotorControl"/>
+        <register_type name="Common::DeviceType" type_ref="Common::DeviceType"/>
+        <register_type name="Common::DeviceStatuses" type_ref="Common::DeviceStatuses"/>
+        <register_type name="Common::DeviceStatus" type_ref="Common::DeviceStatus"/>
+        <register_type name="Common::DeviceHeartbeat" type_ref="Common::DeviceHeartbeat"/>
+        <register_type name="PatientMonitor::Vitals" type_ref="PatientMonitor::Vitals"/>
+        <register_type name="DigitalTwin::Location" type_ref="DigitalTwin::Location"/>
+        <register_type name="Orchestrator::DeviceCommand" type_ref="Orchestrator::DeviceCommand"/>
+
+        <topic name="topic/MotorTelemetry" register_type_ref="SurgicalRobot::MotorTelemetry"/>
+        <topic name="topic/MotorControl" register_type_ref="SurgicalRobot::MotorControl"/>
+        <topic name="topic/DeviceStatus" register_type_ref="Common::DeviceStatus"/>
+        <topic name="topic/DeviceHeartbeat" register_type_ref="Common::DeviceHeartbeat"/>
+        <topic name="topic/DeviceCommand" register_type_ref="Orchestrator::DeviceCommand"/>
+        <topic name="topic/Vitals" register_type_ref="PatientMonitor::Vitals"/>
+        <topic name="topic/ArmLocation" register_type_ref="DigitalTwin::Location"/>
+      </domain>
+    </domain_library>
+
+    <domain_participant_library name="MedicalDemoParticipantLibrary">
+
+        <domain_participant name="Arm" domain_ref="MedicalDemoDomainLibrary::OperationalDomain">
+            <publisher name="publisher">
+              <data_writer name="TelemetryDW" topic_ref="topic/MotorTelemetry">
+                <datawriter_qos base_name="DataFlowLibrary::Status"/>
+              </data_writer>
+              <data_writer name="DeviceStatusDW" topic_ref="topic/DeviceStatus">
+                <datawriter_qos base_name="DataFlowLibrary::Status"/>
+              </data_writer>
+              <data_writer name="DeviceHeartbeatDW" topic_ref="topic/DeviceHeartbeat">
+                <datawriter_qos base_name="DataFlowLibrary::Heartbeat"/>
+              </data_writer>
+              <publisher_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </publisher>
+
+            <subscriber name="subscriber">
+              <data_reader name="CommandDR" topic_ref="topic/MotorControl">
+              </data_reader>
+            </subscriber>
+
+            <domain_participant_qos base_name="SystemLibrary::DefaultParticipant"/>
+          </domain_participant>
+
+        <domain_participant name="ArmController" domain_ref="MedicalDemoDomainLibrary::OperationalDomain">
+            <publisher name="publisher">
+              <data_writer name="MotorTelemetryDW" topic_ref="topic/MotorTelemetry">
+                <datawriter_qos base_name="DataFlowLibrary::Streaming"/>
+              </data_writer>
+              <data_writer name="DeviceStatusDW" topic_ref="topic/DeviceStatus">
+                <datawriter_qos base_name="DataFlowLibrary::Status"/>
+              </data_writer>
+              <data_writer name="DeviceHeartbeatDW" topic_ref="topic/DeviceHeartbeat">
+                <datawriter_qos base_name="DataFlowLibrary::Heartbeat"/>
+              </data_writer>
+              <publisher_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </publisher>
+    
+            <subscriber name="subscriber">
+              <data_reader name="MotorControlDR" topic_ref="topic/MotorControl">
+                <datareader_qos base_name="DataFlowLibrary::Streaming"/>
+              </data_reader>
+              <data_reader name="DeviceCommandDR" topic_ref="topic/DeviceCommand">
+                <datareader_qos base_name="DataFlowLibrary::Command"/>
+              </data_reader>
+              <subscriber_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </subscriber>
+            <domain_participant_qos base_name="SystemLibrary::DefaultParticipant"/>
+        </domain_participant>
+    
+        <domain_participant name="WebController" domain_ref="MedicalDemoDomainLibrary::OperationalDomain">
+            <publisher name="publisher">
+              <data_writer name="MotorControlDW" topic_ref="topic/MotorControl">
+                <datawriter_qos base_name="DataFlowLibrary::Streaming"/>
+              </data_writer>
+              <data_writer name="DeviceStatusDW" topic_ref="topic/DeviceStatus">
+                <datawriter_qos base_name="DataFlowLibrary::Status"/>
+              </data_writer>
+              <data_writer name="DeviceHeartbeatDW" topic_ref="topic/DeviceHeartbeat">
+                <datawriter_qos base_name="DataFlowLibrary::Heartbeat"/>
+              </data_writer>
+              <publisher_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </publisher>
+    
+            <subscriber name="subscriber">
+              <data_reader name="DeviceCommandDR" topic_ref="topic/DeviceCommand">
+                <datareader_qos base_name="DataFlowLibrary::Command"/>
+              </data_reader>
+              <subscriber_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </subscriber>
+            <domain_participant_qos base_name="SystemLibrary::DefaultParticipant"/>
+        </domain_participant>
+          
+        <domain_participant name="Orchestrator" domain_ref="MedicalDemoDomainLibrary::OperationalDomain">
+            <publisher name="publisher">
+              <data_writer name="DeviceCommandDW" topic_ref="topic/DeviceCommand">
+                <datawriter_qos base_name="DataFlowLibrary::Command"/>
+              </data_writer>
+              <publisher_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </publisher>
+    
+            <subscriber name="subscriber">
+              <data_reader name="DeviceStatusDR" topic_ref="topic/DeviceStatus">
+                <datareader_qos base_name="DataFlowLibrary::Status"/>
+              </data_reader>
+              <data_reader name="DeviceHeartbeatDR" topic_ref="topic/DeviceHeartbeat">
+                <datareader_qos base_name="DataFlowLibrary::Heartbeat"/>
+              </data_reader>
+              <subscriber_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </subscriber>
+            <domain_participant_qos base_name="SystemLibrary::DefaultParticipant"/>
+        </domain_participant>
+
+        <domain_participant name="PatientMonitor" domain_ref="MedicalDemoDomainLibrary::OperationalDomain">
+            <publisher name="publisher">
+            <data_writer name="VitalsDW" topic_ref="topic/Vitals">
+                <datawriter_qos base_name="DataFlowLibrary::Status"/>
+            </data_writer>
+            <data_writer name="DeviceStatusDW" topic_ref="topic/DeviceStatus">
+                <datawriter_qos base_name="DataFlowLibrary::Status"/>
+              </data_writer>
+              <data_writer name="DeviceHeartbeatDW" topic_ref="topic/DeviceHeartbeat">
+                <datawriter_qos base_name="DataFlowLibrary::Heartbeat"/>
+              </data_writer>
+              <publisher_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </publisher>
+
+            <subscriber name="subscriber">
+                <data_reader name="DeviceCommandDR" topic_ref="topic/DeviceCommand">
+                  <datareader_qos base_name="DataFlowLibrary::Command"/>
+                </data_reader>
+                <subscriber_qos base_name="BuiltinQosLib::Generic.Common"/>
+              </subscriber>
+            <domain_participant_qos base_name="SystemLibrary::DefaultParticipant"/>
+        </domain_participant>
+
+        <domain_participant name="DigitalTwin" domain_ref="MedicalDemoDomainLibrary::OperationalDomain">
+            <publisher name="publisher">
+                <data_writer name="LocationDW" topic_ref="topic/ArmLocation">
+                    <datawriter_qos base_name="DataFlowLibrary::Status"/>
+                </data_writer>
+                <data_writer name="DeviceStatusDW" topic_ref="topic/DeviceStatus">
+                    <datawriter_qos base_name="DataFlowLibrary::Status"/>
+                  </data_writer>
+                  <data_writer name="DeviceHeartbeatDW" topic_ref="topic/DeviceHeartbeat">
+                    <datawriter_qos base_name="DataFlowLibrary::Heartbeat"/>
+                  </data_writer>
+                  <publisher_qos base_name="BuiltinQosLib::Generic.Common"/>
+            </publisher>
+
+            <subscriber name="subscriber">
+                <data_reader name="TelemetryDR" topic_ref="topic/MotorTelemetry"/>
+                <data_reader name="DeviceCommandDR" topic_ref="topic/DeviceCommand">
+                    <datareader_qos base_name="DataFlowLibrary::Command"/>
+                  </data_reader>
+            </subscriber>
+            
+            <domain_participant_qos base_name="SystemLibrary::DefaultParticipant"/>
+        </domain_participant>
+
+    </domain_participant_library>
+
+</dds>
