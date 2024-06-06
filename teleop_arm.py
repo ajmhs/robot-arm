@@ -30,8 +30,8 @@ CST_LSS_Port = "/dev/ttyUSB0"		# For Linux/Unix platforms
 # CST_LSS_Port = "COM230"				# For windows platforms
 CST_LSS_Baud = lssc.LSS_DefaultBaud
 
-maxrpm = [5,3,5,5,5] # How fast each servo can spin
-limits = [(-90,180),(-30,75),(-90,15),(-85,65),(-90,-5)] # Movement limits for each servo
+maxrpm = [5,3,5,5,5] # How fast each servo should spin
+limits = [(-90,180),(-30,75),(-90,15),(-85,65),(-90,-2)] # Movement limits for each servo
 
 # Create and open a serial port
 lss.initBus(CST_LSS_Port, CST_LSS_Baud)
