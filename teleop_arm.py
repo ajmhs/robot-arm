@@ -1,6 +1,7 @@
 # Import required libs
 import threading, time, serial
 from os import path as os_path
+import random
 
 # Import Connext
 import rti.connextdds as dds
@@ -84,15 +85,25 @@ while True:
         
             pos = int(motorlist[motor_id].getPosition()) / 10.0
 
-            if direction == 1: 
+            if direction == 1: # left leg in
                 delta = maxrpm[motor_id]
                 if pos+delta >= limits[motor_id][1]:
                     delta = 0
 
-            elif direction == 2: 
+            elif direction == 2: # left leg out
                 delta = -maxrpm[motor_id]
                 if pos+delta <= limits[motor_id][0]:
                     delta = 0
+            
+            elif direction == 3: # do the hokey-cokey
+                newpos = random.randint(limits[motor_id][0], limits[motor_id][1])
+                if newpos > pos:
+                    delta = newpos - pos
+                elif pos > newpos:
+                    delta = -(pos - newpos)
+                else:
+                    delta = 0
+
 
             print(f"Delta is {delta}, new position is {pos+delta}")
 

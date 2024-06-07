@@ -55,6 +55,7 @@
             <enumerator name="STATIONARY"/>
             <enumerator name="INCREMENT"/>
             <enumerator name="DECREMENT"/>
+            <enumerator name="RANDOM" />
           </enum> 
           <struct name= "MotorTelemetry">
             <member name="id" type="nonBasic"  nonBasicTypeName= "SurgicalRobot::Motors" key="true"/>

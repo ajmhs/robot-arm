@@ -1,5 +1,7 @@
 import pygame
 from enum import IntEnum
+import random
+import time
 import rti.connextdds as dds
 from os import path as os_path
 
@@ -31,6 +33,7 @@ left_right = [Motors.BASE, Motors.HAND]
 def poll_joystick(joystick):
     clock = pygame.time.Clock()
     output = dds.DynamicData(motor_control_t)
+    last_event_time = 0 # Start in demo mode
 
     print('Creating DataWriter')
 
@@ -47,6 +50,8 @@ def poll_joystick(joystick):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return
+                
+            current_time = int(time.time())
 
             # Poll joystick for button states            
             button_states = [joystick.get_button(i) for i in range(num_buttons)]
@@ -57,37 +62,45 @@ def poll_joystick(joystick):
 
             if button_states[Buttons.PRIMARY_LEFT]:
                 target = Motors.SHOULDER            
-            
-            if button_states[Buttons.PRIMARY_RIGHT]:
+            elif button_states[Buttons.PRIMARY_RIGHT]:
                 target = Motors.ELBOW
-
-            if button_states[Buttons.SECONDARY_LEFT]:
+            elif button_states[Buttons.SECONDARY_LEFT]:
                 target = Motors.WRIST
-
-            if button_states[Buttons.SECONDARY_RIGHT]:
-                target = Motors.HAND
+            elif button_states[Buttons.SECONDARY_RIGHT]:
+                target = Motors.HAND                                
 
             # Left/right
             if target in left_right:
                 if int(axis_states[0]) < 0: # left
                     output['id'] = target
                     output['direction'] = 2            
-                    writer.write(output)                
+                    writer.write(output)
+                    last_event_time = current_time      
                 elif round(axis_states[0]) > 0: # right
                     output['id'] = target
                     output['direction'] = 1
                     writer.write(output)
+                    last_event_time = current_time
             
             if target in up_down:
                 if int(axis_states[1]) < 0: # up
                     output['id'] = target
                     output['direction'] = 1 if target == Motors.SHOULDER else 2
                     writer.write(output)
+                    last_event_time = current_time
                 elif round(axis_states[1]) > 0: # down
                     output['id'] = target
                     output['direction'] = 2 if target == Motors.SHOULDER else 1
                     writer.write(output)
-            
+                    last_event_time = current_time
+                        
+            if current_time - last_event_time >= 30: # No event for over 30 secs
+                output['id'] = random.randint(Motors.BASE, Motors.HAND)
+                output['direction'] = 3
+                writer.write(output)
+                time.sleep(1)
+                
+
             #print("Axis States:", axis_states)
 
             # Adjust the clock speed as needed
