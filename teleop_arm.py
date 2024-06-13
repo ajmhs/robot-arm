@@ -71,6 +71,9 @@ telemetry_writer = dds.DynamicData.DataWriter(
 control_reader = dds.DynamicData.DataReader(
     participant.find_datareader('subscriber::MotorControlDR'))
 
+def get_motor_pos(motor_id): 
+    return int(motorlist[motor_id].getPosition()) / 10.0
+
 while True:
     publish_telemetry(telemetry_writer, motorlist)
     time.sleep(0.001)
@@ -104,6 +107,10 @@ while True:
                 else:
                     delta = 0
 
+                if delta > 0 and motor_id in [1,3] or delta < 0 and motor_id == 2: # Motor sometimes touches its toes and gets stuck
+                    if get_motor_pos(1) > 70 and get_motor_pos(2) < 15 and get_motor_pos(3) > 25: 
+                        delta = 0
+                
 
             print(f"Delta is {delta}, new position is {pos+delta}")
 
