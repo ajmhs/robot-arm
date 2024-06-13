@@ -13,17 +13,20 @@ import lss_const as lssc
 def publish_telemetry(writer, motorlist):
     for i in range(5):
         lss = motorlist[i]
+        try: 
+            # Sometimes get NoneType from lss.get...
+            telemetry = dds.DynamicData(motor_telemetry_t)
 
-        telemetry = dds.DynamicData(motor_telemetry_t)
-
-        telemetry['id'] = i
-        telemetry['position_deg'] = int(lss.getPosition()) / 10.0
-        telemetry['speed_rpm'] = int(lss.getSpeedRPM())
-        telemetry['current_mA'] = int(lss.getCurrent())
-        telemetry['voltage_V'] = int(lss.getVoltage()) / 1000.0
-        telemetry['temp_c'] = int(lss.getTemperature()) / 10.0
-        
-        writer.write(telemetry)
+            telemetry['id'] = i
+            telemetry['position_deg'] = int(lss.getPosition()) / 10.0
+            telemetry['speed_rpm'] = int(lss.getSpeedRPM())
+            telemetry['current_mA'] = int(lss.getCurrent())
+            telemetry['voltage_V'] = int(lss.getVoltage()) / 1000.0
+            telemetry['temp_c'] = int(lss.getTemperature()) / 10.0
+            
+            writer.write(telemetry)
+        except:
+            pass
 
 
 # Constants
@@ -71,8 +74,9 @@ telemetry_writer = dds.DynamicData.DataWriter(
 control_reader = dds.DynamicData.DataReader(
     participant.find_datareader('subscriber::MotorControlDR'))
 
-def get_motor_pos(motor_id): 
-    return int(motorlist[motor_id].getPosition()) / 10.0
+
+def get_motor_pos(motor_id):     
+    return int(motorlist[motor_id].getPosition()) / 10.0     
 
 while True:
     publish_telemetry(telemetry_writer, motorlist)
@@ -86,7 +90,10 @@ while True:
             motor_id = int(data["id"])
             direction = int(data["direction"])
         
-            pos = int(motorlist[motor_id].getPosition()) / 10.0
+            try: # Sometimes get NoneType from lss.get...
+                pos = get_motor_pos(motor_id)
+            except:
+                continue
 
             if direction == 1: # left leg in
                 delta = maxrpm[motor_id]
@@ -107,10 +114,13 @@ while True:
                 else:
                     delta = 0
 
-                if delta > 0 and motor_id in [1,3] or delta < 0 and motor_id == 2: # Motor sometimes touches its toes and gets stuck
-                    if get_motor_pos(1) > 70 and get_motor_pos(2) < 15 and get_motor_pos(3) > 25: 
-                        delta = 0
-                
+                # Motor sometimes touches its toes and gets stuck (work in progress)
+                if delta > 0 and motor_id in [1,3] or delta < 0 and motor_id == 2: 
+                    try:
+                        if get_motor_pos(1) > 70 and get_motor_pos(2) < 20 and get_motor_pos(3) < 0: 
+                            delta = 0
+                    except:
+                        continue                
 
             print(f"Delta is {delta}, new position is {pos+delta}")
 
